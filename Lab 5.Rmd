@@ -1,0 +1,140 @@
+---
+title: "Lab 5"
+author: "C.Swick"
+date: "2022-10-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+install.packages("effsize")
+install.packages("ggpubr")
+library(effsize)
+library(ggpubr)
+```
+
+
+
+
+# CI, t-test, plotting, effect size (and some big data considerations)
+
+data:
+```{r}
+desert_bighorn <- c(32, 44, 18, 26, 50, 33, 42, 20)
+sierra_bighorn <- c(28, 31, 40, 42, 26, 29, 31) # in inches
+
+desert_bighorn_cm <- desert_bighorn*2.54
+sierra_bighorn_cm <- sierra_bighorn*2.54
+```
+
+
+qqplot 
+```{r}
+qqplot_dbh <- ggplot(data.frame(desert_bighorn_cm), aes(sample = desert_bighorn_cm)) + 
+  geom_qq() + labs(title = "Desert Bighorn Sheep") + theme_bw()
+
+qqplot_dbh
+
+qqplot_sbh <- ggplot(data.frame(sierra_bighorn_cm), aes(sample = sierra_bighorn_cm)) + 
+  geom_qq() + labs(title = "Sierra Bighorn Sheep") + theme_bw()
+
+qqplot_sbh
+
+```
+
+
+
+Summary Statistics 
+```{r}
+summary(desert_bighorn_cm)
+
+summary(sierra_bighorn_cm)
+```
+
+
+Build Confidence Interval 
+```{r}
+t.test(desert_bighorn_cm, conf.level = .9) #changing confidence interval changes range output 
+t.test(sierra_bighorn_cm, conf.level = .9)
+```
+
+
+
+one sample t-test 
+```{r}
+dbh_one_sample_ttest <- t.test(desert_bighorn_cm, mu = 123)
+dbh_one_sample_ttest
+```
+
+
+Two Sample t-test 
+```{r}
+bighorn_ttest <- t.test(desert_bighorn_cm, sierra_bighorn_cm)
+# default is Welch, Wlech is more robust, other option is student's t.test 
+bighorn_ttest
+```
+
+
+Using ggpub commands to plot data 
+```{r}
+dbh <- data.frame(horn_length_cm = desert_bighorn_cm)
+dbh$subspecies <- "desert"
+
+sbh <- data.frame(horn_length_cm = sierra_bighorn_cm)
+sbh$subspecies <- "sierra"
+```
+
+join -- create data frame 
+```{r}
+bh_cm <- rbind(dbh,sbh) # column bind, stacked data sets 
+bh_cm_2 <- full_join(dbh, sbh)
+```
+
+
+Use data frame to make a box plot 
+```{r}
+bh_boxplot <- ggboxplot(bh_cm, x = "subspecies", y = "horn_length_cm", ylab = "Horn Length (cm)", xlab = "Bighorn Subspecies", add = "jitter")
+
+bh_boxplot
+```
+
+
+
+Cohen's d Effect Size 
+```{r}
+bhs_cohen_d <- cohen.d(desert_bighorn_cm, sierra_bighorn_cm)
+bhs_cohen_d
+# d of 1 would mean there is a large effect size 
+#we dont have enough data to confidentely measure effect size 
+```
+
+
+Hypothetical example 
+```{r}
+desert_bighorn_cm_mod <- desert_bighorn_cm + 20
+
+bhs_cohen_d_mode <- cohen.d(desert_bighorn_cm_mod, sierra_bighorn_cm)
+
+bhs_cohen_d_mode #might be a difference, but not a meaningful difference. need more data 
+```
+
+
+
+
+big data 
+```{r}
+#set.seed(1)
+sensor_1 <- rnorm(10000000, 5, 2)
+sensor_2 <- rnorm(10000000, 5, 2)
+
+t.test(sensor_1, sensor_2)
+cohen.d(sensor_1, sensor_2)
+```
+
+
+
+
+
+
+
